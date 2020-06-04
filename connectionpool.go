@@ -227,6 +227,7 @@ func (p *policyConnPool) Close() {
 	// close the pools
 	for addr, pool := range p.hostConnPools {
 		delete(p.hostConnPools, addr)
+		pool.deregisterMetrics()
 		pool.Close()
 	}
 }
