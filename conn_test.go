@@ -14,9 +14,9 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"net"
-	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -149,12 +149,6 @@ func newTestSession(proto protoVersion, addresses ...string) (*Session, error) {
 }
 
 func TestDNSLookupConnected(t *testing.T) {
-	log := &testLogger{}
-	Logger = log
-	defer func() {
-		Logger = &defaultLogger{}
-	}()
-
 	// Override the defaul DNS resolver and restore at the end
 	failDNS = true
 	defer func() { failDNS = false }()
@@ -179,12 +173,6 @@ func TestDNSLookupConnected(t *testing.T) {
 }
 
 func TestDNSLookupError(t *testing.T) {
-	log := &testLogger{}
-	Logger = log
-	defer func() {
-		Logger = &defaultLogger{}
-	}()
-
 	// Override the defaul DNS resolver and restore at the end
 	failDNS = true
 	defer func() { failDNS = false }()
@@ -211,12 +199,6 @@ func TestDNSLookupError(t *testing.T) {
 
 func TestStartupTimeout(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	log := &testLogger{}
-	Logger = log
-	defer func() {
-		Logger = &defaultLogger{}
-	}()
-
 	srv := NewTestServer(t, defaultProto, ctx)
 	defer srv.Stop()
 
@@ -328,7 +310,7 @@ func (o *testQueryObserver) ObserveQuery(ctx context.Context, q ObservedQuery) {
 	host := q.Host.ConnectAddress().String()
 	o.metrics[host] = q.Metrics
 	if o.verbose {
-		Logger.Printf("Observed query %q. Returned %v rows, took %v on host %q with %v attempts and total latency %v. Error: %q\n",
+		log.Printf("Observed query %q. Returned %v rows, took %v on host %q with %v attempts and total latency %v. Error: %q\n",
 			q.Statement, q.Rows, q.End.Sub(q.Start), host, q.Metrics.Attempts, q.Metrics.TotalLatency, q.Err)
 	}
 }
@@ -381,13 +363,6 @@ func TestQueryRetry(t *testing.T) {
 }
 
 func TestQueryMultinodeWithMetrics(t *testing.T) {
-	log := &testLogger{}
-	Logger = log
-	defer func() {
-		Logger = &defaultLogger{}
-		os.Stdout.WriteString(log.String())
-	}()
-
 	// Build a 3 node cluster to test host metric mapping
 	var nodes []*TestServer
 	var addresses = []string{
@@ -458,13 +433,6 @@ func (t *testRetryPolicy) GetRetryType(err error) RetryType {
 }
 
 func TestSpeculativeExecution(t *testing.T) {
-	log := &testLogger{}
-	Logger = log
-	defer func() {
-		Logger = &defaultLogger{}
-		os.Stdout.WriteString(log.String())
-	}()
-
 	// Build a 3 node cluster
 	var nodes []*TestServer
 	var addresses = []string{
