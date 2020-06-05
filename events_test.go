@@ -4,6 +4,8 @@ import (
 	"net"
 	"sync"
 	"testing"
+
+	"github.com/go-kit/kit/log"
 )
 
 func TestEventDebounce(t *testing.T) {
@@ -12,7 +14,7 @@ func TestEventDebounce(t *testing.T) {
 	wg.Add(1)
 
 	eventsSeen := 0
-	debouncer := newEventDebouncer("testDebouncer", func(events []frame) {
+	debouncer := newEventDebouncer(log.NewNopLogger(), "testDebouncer", func(events []frame) {
 		defer wg.Done()
 		eventsSeen += len(events)
 	})

@@ -7,7 +7,16 @@ import (
 	"fmt"
 	"net"
 	"testing"
+
+	"github.com/go-kit/kit/log"
+	"github.com/prometheus/client_golang/prometheus"
 )
+
+type noopRegisterer struct{}
+
+func (noopRegisterer) Register(prometheus.Collector) error  { return nil }
+func (noopRegisterer) MustRegister(...prometheus.Collector) {}
+func (noopRegisterer) Unregister(prometheus.Collector) bool { return false }
 
 func TestSessionAPI(t *testing.T) {
 	cfg := &ClusterConfig{}
@@ -18,7 +27,7 @@ func TestSessionAPI(t *testing.T) {
 		policy: RoundRobinHostPolicy(),
 	}
 
-	s.pool = cfg.PoolConfig.buildPool(s)
+	s.pool = cfg.PoolConfig.buildPool(log.NewNopLogger(), noopRegisterer{}, s)
 	s.executor = &queryExecutor{
 		pool:   s.pool,
 		policy: s.policy,
@@ -189,7 +198,7 @@ func TestBatchBasicAPI(t *testing.T) {
 	}
 	defer s.Close()
 
-	s.pool = cfg.PoolConfig.buildPool(s)
+	s.pool = cfg.PoolConfig.buildPool(log.NewNopLogger(), noopRegisterer{}, s)
 
 	// Test UnloggedBatch
 	b := s.NewBatch(UnloggedBatch)
